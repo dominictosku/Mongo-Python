@@ -9,83 +9,53 @@ class MongoDb():
 		client = MongoClient(connectionString)
 		self.client = client
 		self.database = client["JukeBox"]
+		self.collection = self.setCollection("songs")
+		
 
-	def findDocument(self, collection, document):
-		return self.database[collection].find_one(
+	def findDocument(self, document):
+		return self.collection.find_one(
         {"_id": document.inserted_id}
     	)
 
 	def InsertToDB(self, collection, document):
 		return self.database[collection].insert_one(document)
-
-	def UpdateDB(self, collection, document):
-		self.database[collection].update_one(document)
+	
+	def UpdateDB(self, id, document):
+		filter = {"_id": id}
+		newvalues = {"$set": document}
+		return self.collection.update_one(filter, newvalues)
 
 	def getDatabase(self):
 		dblist = self.client.list_database_names()
-		print('\n1:')
-		print('Databases')
-		for db in dblist:
-			print('-', db)
-		return
+		return dblist
 
-	def setDatabase(self):
-		dblist = self.client.list_database_names()
-		print('Select Database:')
-		validInput = True
-		dbName = ''
-		while validInput:
-			dbName = input()
-			if dbName not in dblist:
-				print("No Database.")
-				continue
-			validInput = False
+	def setDatabase(self, dbName):
 		self.database = self.client[dbName]
 		return
 	
 	def getCollection(self):
-		collections = self.database.list_collection_names()
-		print('Collections')
-		for collection in collections:
-			print('-' + collection)
-		return collections
+		return self.database.list_collection_names()
 
-	def setCollection(self):
-		print('Select Collections:')
-		collectionName = input()
-		collection = self.database[collectionName]
-		if collectionName not in self.database.list_collection_names():
-			self.RestartProgram()
-			return
-		print('Db: ' + self.database.name)
-		print('Collection: ' + collectionName)
-		return collection
+	def setCollection(self, collectionName):
+		self.collection = self.database[collectionName]
+		return self.collection
 
-	def getDocuments(self, collection):
+	def getDocuments(self):
 		print('Documents')
-		for document in collection.find():
+		for document in self.collection.find(limit=100):
 			print(document['_id'])
-		return collection.find()
+		return list(self.collection.find(limit=100))
 	
-	def getDocumentFromId(self, collection):
-		print('Select Document:')
-		print('Document:')
+	def getDocumentFromId(self, id):
 		documentDict = []
-		queryId = input()
-		query = { "_id": bson.ObjectId(queryId) }
-		document = collection.find_one(query)
+		query = { "_id": bson.ObjectId(id) }
+		document = self.collection.find_one(query)
 		if document is None:
-			self.RestartProgram()
-			return
+			return None
 		for k, v in document.items():
 			output = k,':', v
 			documentDict.append(output)
-			print(k,':', v)
 		return documentDict
-
-	def RestartProgram(self):
-		print('Press any button to return:')
-		input()
 	
 	def Close(self):
 		self.client.close()
