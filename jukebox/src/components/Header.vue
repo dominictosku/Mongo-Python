@@ -11,7 +11,7 @@ import { ref } from 'vue'
                     <img src="../assets/logo.png" alt="Logo" class="logo h-20 w-20 m-2">
                 </RouterLink>
                 <RouterLink to="/lists">
-                    <button class="headerBtn header-button">Meine Liste</button>
+                    <button class="headerBtn header-button mx-6">Meine Liste</button>
                 </RouterLink>
                 <RouterLink to="/">
                     <button class="headerBtn header-button">Song suchen</button>
@@ -91,6 +91,22 @@ import { ref } from 'vue'
 
     .logo-container {
         margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* all hover class active on mobile */
+    .header .logo {
+        transform: scale(1.2);
+    }
+
+    .header .search-bar {
+        width: 300px;
+    }
+
+    .header .shine-animation {
+        background-position: -100% 0;
     }
 }
 </style>
