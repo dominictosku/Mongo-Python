@@ -43,7 +43,7 @@ const config = {
 
 
 onMounted(async () => {
-    if(id == 0) {   // create new entry
+    if (id == 0) {   // create new entry
         requestType.value = "POST";
     } else {
         requestType.value = "PUT";
@@ -52,7 +52,7 @@ onMounted(async () => {
             // loading entry with id from database
             let request = await axios.get(("http://localhost:5000/songs/" + id));
             song.value = request.data;
-        } catch(e) {
+        } catch (e) {
             console.error("error in request:", e);
             // weiterleiten zu 404
         }
@@ -65,7 +65,7 @@ async function submit() {
     let has2beString = " muss ein String sein!";
     let has2beNumber = " muss eine Zahl sein!";
     let requiredField = " ist ein Pflichtfeld!";
-    let validated = false;
+    let validated = true;
 
     /* set all key-values from errorMessages to null */
     try {
@@ -185,7 +185,18 @@ async function submit() {
                 console.error(e); // Handle the error
             }
         } else if (requestType.value === "PUT") {
+            axios({
+                url: 'http://localhost:5000/songs/' + song.value._id,
+                method: requestType.value.toLowerCase(),    // PUT
+                data: JSON.stringify(song.value),   // DATA
+                headers: config.headers
+            })
 
+            try {
+                await axios.put();
+            } catch (e) {
+                console.error(e); // Handle the error
+            }
         } else {
             console.error("Can't make request; Unknown requestType:", requestType.value);
         }
