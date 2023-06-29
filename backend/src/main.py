@@ -1,6 +1,9 @@
 from pymongo import MongoClient
 from fastapi import FastAPI
-from src.routes import router as book_router
+from fastapi.middleware.cors import CORSMiddleware
+from src.routes.song_routes import router as song_router
+from src.routes.playlist_routes import router as playlist_router
+from src.routes.files_routes import router as files_router
 import os
 from src.modules.MongoDb import MongoDb
 
@@ -8,6 +11,15 @@ connectionString = os.environ["DB_CONNECTION"] if "DB_CONNECTION" in os.environ 
 dbName = os.environ["DB_NAME"] if "DB_NAME" in os.environ  else "JukeBox"
 
 app = FastAPI()
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 def startup_db_client():
@@ -22,5 +34,7 @@ def shutdown_db_client():
 async def root():
     return {"message": "Welcome to the PyMongo tutorial!"}
 
-app.include_router(book_router, tags=["songs"], prefix="/songs")
+app.include_router(song_router, tags=["songs"], prefix="/songs")
+app.include_router(playlist_router, tags=["playlists"], prefix="/playlists")
+app.include_router(files_router, tags=["files"], prefix="/files")
 

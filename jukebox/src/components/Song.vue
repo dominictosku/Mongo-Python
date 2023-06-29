@@ -1,18 +1,53 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import axios from 'axios';
+
+const playlists = ref("")
+
+// axios headers config
+const config = {
+    headers: {
+        // 'content-type': 'application/x-www-form-urlencoded',
+        'content-type': 'application/json',
+        'Accept': 'application/json'
+    }
+};
+
+onMounted(async () => {
+    let request;
+    await axios.get("http://localhost:5000/playlists/", config.headers).then(res => {
+        const parsed = res.data; // Assuming the res data is an object or JSON
+        if (parsed) {
+            // Access the expected properties or perform the desired actions
+            request = res.data;
+        } else {
+            throw new Error('Response data is undefined or null.');
+        }
+    }).catch(e => {
+        console.error("Throw error:", e);
+        // Handle the error appropriately
+    });
+
+    console.log("request", request);
+    console.log("datenyp", typeof (request));
+    playlists.value = request;
+})
 
 defineProps({
     song: {
+        _id: String,
         name: String,
-        attributes: Array,
+        attributes: {
+            composer: String,
+            genre: String,
+            year: Number,
+            album: String,
+            required: false
+        },
         duration: Number,
         rating: String,
         required: true,
-    },
-    showCRUDButtons: {
-        type: Boolean,
-        required: true
-    },
+    }
 })
 
 const isMobileView = ref(false);
@@ -41,9 +76,12 @@ function durationValue(duration) {
     } else return duration + " min";
 }
 
-function addToPlaylist(song) {
+async function addToPlaylist(song) {
     // Add logic for adding song to playlist
+    let playlist = playlists.value[0]
+    playlist.songs = [song._id]
     console.log('Add to playlist:', song);
+    await axios.put(('http://localhost:5000/playlists/' + playlist._id), playlist, config.headers);
 }
 
 function editSong(song) {
@@ -70,7 +108,7 @@ window.addEventListener('resize', handleScreenWidthChange);
     <div class="flex justify-between mb-2">
         <div class="font-semibold">{{ song.name }}</div>
         <div class="space-x-2 relative">
-            <button class="text-green-600" @click="addToPlaylist(song)">
+            <button title="Zur ausgewählten Playlist hinzufügen" class="text-green-600" @click="addToPlaylist(song)">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 5v14m-7-7h14"></path>
@@ -80,24 +118,36 @@ window.addEventListener('resize', handleScreenWidthChange);
                 <button class="rounded-full p-1" @click="isDropdownOpen = !isDropdownOpen">
                     <img src="../assets/threeDots.svg" alt="" />
                 </button>
-                <div v-if="showCRUDButtons && isDropdownOpen">
-                    <button class="dropdown rounded-t-sm mt-8" @click="editSong(song)">Bearbeiten</button>
-                    <button class="dropdown rounded-b-sm mt-16" @click="deleteSong(song)">Löschen</button>
+                <div v-if="isDropdownOpen">
+                    <router-link :to="'/manage-song/' + song._id">
+                        <button class="dropdown rounded-t-sm mt-8" @click="editSong(song)">Bearbeiten</button>
+                    </router-link>
+                    <router-link :to="'delete-song/' + song._id">
+                        <button class="dropdown rounded-b-sm mt-16" @click="deleteSong(song)">Löschen</button>
+                    </router-link>
                 </div>
             </span>
         </div>
     </div>
     <div class="text-gray-600 mb-2">
-        <span v-for="attribute in song.attributes" :key="attribute">
-            {{ attribute }} |
+        <span>
+            {{ song.attributes.composer != "" && song.attributes.composer != undefined ? song.attributes.composer + " |" : '' }}
+            {{ song.attributes.genre != "" && song.attributes.genre != undefined ? song.attributes.genre + " |" : '' }}
+            {{ song.attributes.interpret != "" && song.attributes.interpret != undefined ? song.attributes.interpret + " |" : '' }}
+            {{ song.attributes.year != "" && song.attributes.year != undefined ? song.attributes.year + " |" : '' }}
+            {{ song.attributes.album != "" && song.attributes.album != undefined ? song.attributes.album : '' }}
             <!-- last objects in line is duration -->
-            <span v-if="isLastAttribute(attribute, song.attributes)">{{ durationValue(song.duartion) }}</span>
+            <span>{{ durationValue(song.duartion) }}</span>
         </span>
     </div>
     <div class="text-gray-500" :class="song.rating >= 4 ? 'text-green-600' : ''">{{ song.rating }} Rating</div>
     <div v-if="isMobileView">
-        <button class="text-blue-900 mx-1" @click="editSong(song)">Bearbeiten</button>
-        <button class="text-red-600 mx-1" @click="deleteSong(song)">Löschen</button>
+        <router-link :to="'/manage-song/' + song._id">
+            <button class="text-blue-900 mr-1" @click="editSong(song)">Bearbeiten</button>
+        </router-link>
+        <router-link :to="'delete-song/' + song._id">
+            <button class="text-red-600 mx-1" @click="deleteSong(song)">Löschen</button>
+        </router-link>
     </div>
 </template>
 

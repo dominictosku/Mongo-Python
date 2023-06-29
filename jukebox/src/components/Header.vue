@@ -10,15 +10,9 @@ import { ref } from 'vue'
                 <RouterLink to="/">
                     <img src="../assets/logo.png" alt="Logo" class="logo h-20 w-20 m-2">
                 </RouterLink>
-                <RouterLink to="/lists">
-                    <button class="headerBtn header-button mx-6">Meine Liste</button>
-                </RouterLink>
                 <RouterLink to="/">
-                    <button class="headerBtn header-button">Song suchen</button>
+                    <button class="headerBtn header-button mx-4">Home</button>
                 </RouterLink>
-            </div>
-            <div class="search-container">
-                <input type="text" placeholder="Song suchen..." class="search-bar search">
             </div>
         </div>
         <div class="shine-animation"></div>
