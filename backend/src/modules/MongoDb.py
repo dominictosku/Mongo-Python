@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 import bson
-from gridfs import GridFSBucket
+import gridfs
 
 class MongoDb():
 	def __init__(self, connectionString, _id = None):
@@ -12,7 +12,8 @@ class MongoDb():
 		self.database = client["JukeBox"]
 		self.songCollection = client["JukeBox"]["songs"]
 		self.playlistCollection = client["JukeBox"]["playlists"]
-		self.fs = GridFSBucket(client["JukeBox"])
+		self.fsBucket = gridfs.GridFSBucket(client["JukeBox"])
+		self.fs = gridfs.GridFS(client["JukeBox"])
 
 	def findSongById(self, id):
 		filter = {"_id": id}
@@ -29,7 +30,16 @@ class MongoDb():
 		return playlist
 	
 	def findFileById(self, fileId):
-		return self.fs.get(fileId)
+		file = self.fsBucket.open_download_stream(fileId)
+		return self.iterfile(file)
+	
+	def iterfile(self, file):
+		with file as file_like:
+			yield from file_like 	
+	
+	def findFileByName(self, fileName):
+		file = self.fs.find_one({"filename": fileName})
+		return self.iterfile(file)
 
 	def InsertSong(self, document):
 		return self.songCollection.insert_one(document)
@@ -37,9 +47,14 @@ class MongoDb():
 	def InsertPlaylist(self, document):
 		return self.playlistCollection.insert_one(document)
 	
-	def InsertFile(self, file):
-		fileId = self.fs.upload_from_stream("testFile", file)
-		return self.getFile(fileId)
+	def InsertFile(self, filename: str, file):
+		try:
+			fildId = self.fs.find_one({"filename": filename})._id
+			self.fs.delete(fildId)
+		except:
+			print("File could not be deleted")	
+		fileId = self.fsBucket.upload_from_stream(filename, file)
+		return fileId
 	
 	def UpdateSong(self, id, document):
 		filter = {"_id": id}
@@ -78,11 +93,6 @@ class MongoDb():
 		songQuery = { "_id": { "$in": playlist["songs"]} }
 		songs = list(self.songCollection.find(songQuery))
 		return songs
-	
-	def getFile(self, fileId):
-		grid_out = self.fs.open_download_stream(fileId)
-		contents = grid_out.read()
-		return contents
 	
 	def getDatabase(self):
 		dblist = self.client.list_database_names()
