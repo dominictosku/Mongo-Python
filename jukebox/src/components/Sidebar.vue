@@ -45,7 +45,6 @@ async function loadPlaylists() {
         }
     }).catch(e => {
         console.error("Throw error:", e);
-        // Handle the error appropriately
     });
 
     console.log("request", request);
@@ -112,16 +111,6 @@ async function changeUrl(url) {
 }
 
 /**
- * cuts string if its longer that 30 digits.
- * @param {string} str song.name / long string
- */
-function getSongLength(str) {
-    if (str.length <= 30) return str;
-
-    return str.slice(0, 30) + '...';
-}
-
-/**
  * plays the next song in a playlist based on the given current song.
  * @param {object} song 
  */
@@ -137,6 +126,26 @@ function playNextSong(song) {
             else playSong(playlist.songs[i + 1]);
         }
     }
+}
+
+async function removeSongFromPlaylist(playlistId, deleteSongId) {
+    let putRequest = new Array();
+    let thisPlaylistObject;
+    
+    // select current playlist object
+    thisPlaylistObject = playlists.value.find(x => x._id == playlistId);
+
+    // do not delete the parameters
+    thisPlaylistObject.songs.forEach((song, index, array) => {
+        if (song._id != deleteSongId) putRequest.push(song._id);
+    });
+
+    // convert to post-request format
+    putRequest = { "name": thisPlaylistObject.name, "songs": putRequest };    
+    await axios.put(("http://localhost:5000/playlists/" + playlistId), putRequest, config.headers);
+
+    // reload page, to show changes
+    window.location.href = window.location.href;
 }
 </script>
 
@@ -202,8 +211,8 @@ function playNextSong(song) {
                             <button @click="playSong(song)" class="p-1 hover:bg-green-500 rounded-full ml-1" title="Play">
                                 <img src="../assets/play.svg" alt="play" />
                             </button>
-                            <button @click="playNextSong(currentSong)" class="p-1 hover:bg-red-500 rounded-full ml-1"
-                                title="Delete">
+                            <button @click="removeSongFromPlaylist(playlist._id, song._id)" class="p-1 hover:bg-red-500 rounded-full ml-1"
+                                title="Aus Playlist entfernen">
                                 <img src="../assets/trash.svg" alt="trash" />
                             </button>
                         </div>
