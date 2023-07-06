@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { setLocalStorageItems } from '../service/LocalStorage.ts';
+import { config } from '../service/api.ts';
 import router from '../router/index.js';
 import axios from 'axios';
 
@@ -13,14 +14,6 @@ const playlist = ref({
     name: "",
     songs: []
 })
-
-// axios headers config
-const config = {
-    headers: {
-        'content-type': 'application/json',
-        'Accept': 'application/json'
-    }
-};
 
 /**
  * get playlist object form database, to show all the data to the user
