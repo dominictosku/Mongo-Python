@@ -1,38 +1,45 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch, inject } from 'vue';
 import { useRoute } from 'vue-router';
+import { getLocalStorageItems, setLocalStorageItems } from '../service/LocalStorage.ts';
+import { config } from '../service/api.ts';
 import router from '../router/index.js';
 import axios from 'axios';
 
 
 const route = useRoute();
-const id = route.params.id;
+const id = ref(route.params.id);
+const { playlists, getPlaylists } = inject('playlists')
+
+watch(
+  () => route.params.id,
+  async (newId, oldId) => {
+    console.log(route.params.id)
+    location.reload(); 
+  }
+)
 
 const playlist = ref({
     name: "",
     songs: []
 })
 
-// axios headers config
-const config = {
-    headers: {
-        'content-type': 'application/json',
-        'Accept': 'application/json'
-    }
-};
-
-/**
- * get playlist object form database, to show all the data to the user
- */
-onMounted(async () => {
+async function loadPlaylist(){
     try {
         // loading entry with id from database
-        let request = await axios.get(("http://localhost:5000/playlists/" + id));
+        let request = await axios.get(("http://localhost:5000/playlists/" + id.value));
         playlist.value = request.data;
     } catch (e) {
         console.error("error in request:", e);
         router.push({ name: "Error404", params: { pathMatch: "/E404" }, replace: true })
     }
+}
+
+/**
+ * get playlist object form database, to show all the data to the user
+ */
+onMounted(async () => {
+    await loadPlaylist()
 })
 
 /**
@@ -41,12 +48,17 @@ onMounted(async () => {
  */
 async function submit() {
     try {
+        // if selectedPlaylist is the one to be deleted, unselect it
+        if(await getLocalStorageItems("selectedPlaylist") == playlist.value._id) {
+            await setLocalStorageItems("selectedPlaylist", "null");
+        }
+        
         await axios.delete(('http://localhost:5000/playlists/' + playlist.value._id), config.headers);
     } catch (e) {
         console.error(e); // Handle the error
     }
-
-    window.location.href = "/";
+    await getPlaylists();
+    router.push({ path: '/', replace: true });
 }
 </script>
 
