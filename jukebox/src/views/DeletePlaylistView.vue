@@ -21,6 +21,9 @@ const config = {
     }
 };
 
+/**
+ * get playlist object form database, to show all the data to the user
+ */
 onMounted(async () => {
     try {
         // loading entry with id from database
@@ -28,11 +31,14 @@ onMounted(async () => {
         playlist.value = request.data;
     } catch (e) {
         console.error("error in request:", e);
-        // weiterleiten zu 404
+        router.push({ name: "Error404", params: { pathMatch: "/E404" }, replace: true })
     }
 })
 
-
+/**
+ * deletes playlist from backend
+ * redirect the homepage with reload to show the changes
+ */
 async function submit() {
     try {
         await axios.delete(('http://localhost:5000/playlists/' + playlist.value._id), config.headers);
@@ -59,7 +65,6 @@ async function submit() {
             <ul v-for="song in playlist.songs" class="pb-4 border-black border-b-2">
                 <li><b>Name:</b> {{ song.name }}</li>
                 <ul>
-                    {{ console.log("songAttribute", song.attributes) }}
                     <li class="list-none text-lg"><b>Attribute:</b></li>
                     <li class="ml-4"><b>Komponist:</b> {{ song.attributes.composer }}</li>
                     <li class="ml-4"><b>Genre:</b> {{ song.attributes.genre }}</li>

@@ -1,37 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, inject } from 'vue';
+import { config } from "../service/api.ts";
+import { getLocalStorageItems } from '../service/LocalStorage.ts';
 import axios from 'axios';
-
-const playlists = ref("")
-
-// axios headers config
-const config = {
-    headers: {
-        // 'content-type': 'application/x-www-form-urlencoded',
-        'content-type': 'application/json',
-        'Accept': 'application/json'
-    }
-};
-
-onMounted(async () => {
-    let request;
-    await axios.get("http://localhost:5000/playlists/", config.headers).then(res => {
-        const parsed = res.data; // Assuming the res data is an object or JSON
-        if (parsed) {
-            // Access the expected properties or perform the desired actions
-            request = res.data;
-        } else {
-            throw new Error('Response data is undefined or null.');
-        }
-    }).catch(e => {
-        console.error("Throw error:", e);
-        // Handle the error appropriately
-    });
-
-    console.log("request", request);
-    console.log("datenyp", typeof (request));
-    playlists.value = request;
-})
 
 defineProps({
     song: {
@@ -49,16 +20,36 @@ defineProps({
         required: true,
     }
 })
-
+const { playlists, getPlaylists } = inject('playlists')
 const isMobileView = ref(false);
 const isDropdownOpen = ref(false);
 
-onMounted(() => {
-    handleScreenWidthChange();
+onMounted(async () => {
+    await handleScreenWidthChange();
+
+    let request;
+    await axios.get("http://localhost:5000/playlists/", config.headers).then(res => {
+        const parsed = res.data; // Assuming the res data is an object or JSON
+        if (parsed) {
+            // Access the expected properties or perform the desired actions
+            request = res.data;
+        } else {
+            throw new Error('Response data is undefined or null.');
+        }
+    }).catch(e => {
+        console.error("Throw error:", e);
+        // Handle the error appropriately
+    });
+
+    playlists.value = request;
 })
 
 /* functions */
-function handleScreenWidthChange() {
+
+/**
+ * toggles mobile view (mobile view is active under 768 px width)
+ */
+async function handleScreenWidthChange() {
     let screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 
     if (screenWidth < 768) isMobileView.value = true;
@@ -76,29 +67,31 @@ function durationValue(duration) {
     } else return duration + " min";
 }
 
+/**
+ * Pushes song object (only id in request to backend) to the selected Playlist
+ * reloads the page, to show the changes
+ * @param {Song} song song object for playlist 
+ */
 async function addToPlaylist(song) {
-    // Add logic for adding song to playlist
-    let playlist = playlists.value[0]
-    playlist.songs = [song._id]
-    console.log('Add to playlist:', song);
+    let selectedPlaylistId = await getLocalStorageItems("selectedPlaylist");
+    const index = playlists.value.findIndex(x => x._id === selectedPlaylistId);
+    let playlist = playlists.value[index];
+    let res = playlist.songs.map(s => s._id);
+
+    if (!Array.isArray(playlist.songs)) {
+        playlist.songs = [song._id];
+    } else {
+        playlist.songs = res;
+    }
+
+    if (!res.includes(song._id)) {
+        playlist.songs = res;
+        playlist.songs.push(song._id);
+    }
+
     await axios.put(('http://localhost:5000/playlists/' + playlist._id), playlist, config.headers);
+    await getPlaylists();
 }
-
-function editSong(song) {
-    // Add logic for editing the song
-    console.log('Edit song:', song);
-}
-
-function deleteSong(song) {
-    // Add logic for deleting the song
-    console.log('Delete song:', song);
-}
-
-function isLastAttribute(attribute, attributes) {
-    // Check if the attribute is the last one in the list
-    return attribute === attributes[attributes.length - 1];
-}
-
 
 /* even listeners */
 window.addEventListener('resize', handleScreenWidthChange);
@@ -120,10 +113,10 @@ window.addEventListener('resize', handleScreenWidthChange);
                 </button>
                 <div v-if="isDropdownOpen">
                     <router-link :to="'/manage-song/' + song._id">
-                        <button class="dropdown rounded-t-sm mt-8" @click="editSong(song)">Bearbeiten</button>
+                        <button class="dropdown rounded-t-sm mt-8">Bearbeiten</button>
                     </router-link>
                     <router-link :to="'delete-song/' + song._id">
-                        <button class="dropdown rounded-b-sm mt-16" @click="deleteSong(song)">Löschen</button>
+                        <button class="dropdown rounded-b-sm mt-16">Löschen</button>
                     </router-link>
                 </div>
             </span>
@@ -131,22 +124,29 @@ window.addEventListener('resize', handleScreenWidthChange);
     </div>
     <div class="text-gray-600 mb-2">
         <span>
-            {{ song.attributes.composer != "" && song.attributes.composer != undefined ? song.attributes.composer + " |" : '' }}
-            {{ song.attributes.genre != "" && song.attributes.genre != undefined ? song.attributes.genre + " |" : '' }}
-            {{ song.attributes.interpret != "" && song.attributes.interpret != undefined ? song.attributes.interpret + " |" : '' }}
-            {{ song.attributes.year != "" && song.attributes.year != undefined ? song.attributes.year + " |" : '' }}
-            {{ song.attributes.album != "" && song.attributes.album != undefined ? song.attributes.album : '' }}
+            {{ song.attributes.composer != "" && song.attributes.composer != undefined ?
+                song.attributes.composer + " |" : '' }}
+            {{ song.attributes.genre != "" && song.attributes.genre != undefined ?
+                song.attributes.genre + " |" : '' }}
+            {{ song.attributes.interpret != "" && song.attributes.interpret != undefined ?
+                song.attributes.interpret + " |" : '' }}
+            {{ song.attributes.year != "" && song.attributes.year != undefined ?
+                song.attributes.year + " |" : '' }}
+            {{ song.attributes.album != "" && song.attributes.album != undefined ?
+                song.attributes.album : '' }}
             <!-- last objects in line is duration -->
-            <span>{{ durationValue(song.duartion) }}</span>
+            <span>{{ durationValue(song.duration) }}</span>
         </span>
     </div>
+
     <div class="text-gray-500" :class="song.rating >= 4 ? 'text-green-600' : ''">{{ song.rating }} Rating</div>
+
     <div v-if="isMobileView">
         <router-link :to="'/manage-song/' + song._id">
-            <button class="text-blue-900 mr-1" @click="editSong(song)">Bearbeiten</button>
+            <button class="text-blue-900 mr-1">Bearbeiten</button>
         </router-link>
         <router-link :to="'delete-song/' + song._id">
-            <button class="text-red-600 mx-1" @click="deleteSong(song)">Löschen</button>
+            <button class="text-red-600 mx-1">Löschen</button>
         </router-link>
     </div>
 </template>

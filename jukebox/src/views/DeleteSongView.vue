@@ -30,6 +30,9 @@ const config = {
     }
 };
 
+/**
+ * get playlist object form database, to show all the data to the user
+ */
 onMounted(async () => {
     try {
         // loading entry with id from database
@@ -37,11 +40,14 @@ onMounted(async () => {
         song.value = request.data;
     } catch (e) {
         console.error("error in request:", e);
-        // weiterleiten zu 404
+        router.push({ name: "Error404", params: { pathMatch: "/E404" }, replace: true })
     }
 })
 
-
+/**
+ * deletes song from backend
+ * router push to homepage; reload not necessary
+ */
 async function submit() {
     try {
         await axios.delete(('http://localhost:5000/songs/' + song.value._id), config.headers);
