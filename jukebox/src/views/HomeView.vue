@@ -38,7 +38,7 @@ function search() {
 
         // Check if the search query matches the song's title or artist
         if (song.name.toLowerCase().includes(searchQuery) &&
-            song.attributes.composer.toLowerCase().includes(searchIntepret)) {
+            song.attributes.interpret.toLowerCase().includes(searchIntepret)) {
             results.push(song);
         }
     }
