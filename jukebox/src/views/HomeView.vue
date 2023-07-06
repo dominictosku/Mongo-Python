@@ -47,8 +47,6 @@ async function getSongs() {
         // Handle the error appropriately
     });
 
-    console.log("request", request);
-    console.log("datenyp", typeof (request));
     songs.value = request;
 }
 
@@ -70,7 +68,6 @@ function search() {
         if (song.name.toLowerCase().includes(searchQuery)) results.push(song);
     }
 
-    console.log(results);
     filteredSongs.value = results;
 }
 </script>
