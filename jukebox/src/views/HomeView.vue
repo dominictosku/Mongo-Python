@@ -36,7 +36,6 @@ function search() {
         if (song.name.toLowerCase().includes(searchQuery)) results.push(song);
     }
 
-    console.log(results);
     filteredSongs.value = results;
 }
 </script>

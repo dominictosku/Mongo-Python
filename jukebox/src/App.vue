@@ -33,8 +33,6 @@ async function getSongs() {
     // Handle the error appropriately
   });
 
-  console.log("request", request);
-  console.log("datenyp", typeof (request));
   songs.value = request;
 }
 
@@ -56,8 +54,6 @@ async function getPlaylists() {
     console.error("Throw error:", e);
   });
 
-  console.log("request", request);
-  console.log("datenyp", typeof (request));
   playlists.value = request;
 }
 // END OF SHOULD BE DIFFERENT FILE

@@ -41,8 +41,6 @@ function closeAllPlaylists() {
 async function togglePlaylist(id) {
     // index in array
     const index = playlists.value.findIndex(x => x._id === id);
-    console.log("index_playlist", index);
-    console.log("isPlaylistOpenValue", isPlaylistOpen.value);
 
     // skip if user wants to close active playlist
     if (isPlaylistOpen.value[index] != true) closeAllPlaylists();
@@ -53,8 +51,6 @@ async function togglePlaylist(id) {
     if (await getLocalStorageItems("selectedPlaylist") == id) await setLocalStorageItems("selectedPlaylist", "null");
     else await setLocalStorageItems("selectedPlaylist", id);
 
-
-    console.log("id von playlist", id);
     selectedPlaylistId.value = await getLocalStorageItems("selectedPlaylist");
 }
 
@@ -179,7 +175,6 @@ async function removeSongFromPlaylist(playlistId, deleteSongId) {
                     </button>
                     <div v-show="isPlaylistOpen[playlists.findIndex(x => x._id === playlist._id)]">
                         <div v-for="song in playlist.songs" class="flex items-center mb-2">
-                            {{ console.log("song id ", song) }}
                             <span class="truncate flex-grow">> {{ song.name }}</span>
                             <div class="ml-auto flex">
                                 <button class="p-1 hover:bg-gray-500 rounded-full" title="Download">
